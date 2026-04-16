@@ -1,0 +1,18 @@
+=== REPORT MIGRACE: TASK ===
+Datum generování: Thu Apr 16 10:29:51 CEST 2026
+Čas běhu: 0 s
+----------------------------------------
+Celkem ke zpracování: 0
+Úspěšně zmigrováno:   0
+Přeskočeno:           0
+Chyby:                1
+----------------------------------------
+
+=== DETAIL CHYB ===
+ID: SYSTEM | Fáze: Kritické selhání jobu | Chyba: An exception occurred while creating a query in EntityManager: 
+Exception Description: Problem compiling [SELECT t FROM SRCTask t WHERE t.modificationTime >= :start AND t.modificationTime <= :end AND t.status IN :statuses ORDER BY t.id ASC]. 
+[14, 21] The abstract schema type 'SRCTask' is unknown.
+[30, 48] The state field path 't.modificationTime' cannot be resolved to a valid type.
+[63, 81] The state field path 't.modificationTime' cannot be resolved to a valid type.
+[94, 102] The state field path 't.status' cannot be resolved to a valid type.
+[124, 128] The state field path 't.id' cannot be resolved to a valid type.

@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<persistence version="2.2" xmlns="http://xmlns.jcp.org/xml/ns/persistence" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://xmlns.jcp.org/xml/ns/persistence           http://xmlns.jcp.org/xml/ns/persistence/persistence_2_2.xsd">
+  <persistence-unit name="dst_PU" transaction-type="RESOURCE_LOCAL">
+    <provider>org.eclipse.persistence.jpa.PersistenceProvider</provider>
+    <class>cz.centropol.actng.dataadapter.dst.entities.GroupOfUsers</class>
+    <class>cz.centropol.actng.dataadapter.dst.entities.KVPair</class>
+    <class>cz.centropol.actng.dataadapter.dst.entities.Permission</class>
+    <class>cz.centropol.actng.dataadapter.dst.entities.Task</class>
+    <class>cz.centropol.actng.dataadapter.dst.entities.TaskAttempt</class>
+    <class>cz.centropol.actng.dataadapter.dst.entities.TaskTraceLog</class>
+    <class>cz.centropol.actng.dataadapter.dst.entities.Url</class>
+    <class>cz.centropol.actng.dataadapter.dst.entities.User</class>
+    <shared-cache-mode>NONE</shared-cache-mode>
+    <properties>
+      <property name="javax.persistence.jdbc.url" value="jdbc:mariadb://slc-cti-p02:3306/ACTNG"/>
+      <property name="javax.persistence.jdbc.user" value="actAdmin"/>
+      <property name="javax.persistence.jdbc.driver" value="org.mariadb.jdbc.Driver"/>
+      <property name="javax.persistence.jdbc.password" value="change1t+"/>
+      <property name="eclipselink.jdbc.batch-writing" value="JDBC"/>
+      <property name="eclipselink.jdbc.batch-writing.size" value="200"/>
+    </properties>
+  </persistence-unit>
+  <persistence-unit name="src_PU" transaction-type="RESOURCE_LOCAL">
+    <provider>org.eclipse.persistence.jpa.PersistenceProvider</provider>
+    <class>cz.centropol.actng.dataadapter.src.entities.Attachment</class>
+    <class>cz.centropol.actng.dataadapter.src.entities.Folder</class>
+    <class>cz.centropol.actng.dataadapter.src.entities.KVPair</class>
+    <class>cz.centropol.actng.dataadapter.src.entities.Permission</class>
+    <class>cz.centropol.actng.dataadapter.src.entities.Task</class>
+    <class>cz.centropol.actng.dataadapter.src.entities.TaskAttemptReport</class>
+    <class>cz.centropol.actng.dataadapter.src.entities.TaskTraceLog</class>
+    <class>cz.centropol.actng.dataadapter.src.entities.Url</class>
+    <shared-cache-mode>NONE</shared-cache-mode>
+    <properties>
+      <property name="javax.persistence.jdbc.url" value="jdbc:mysql://slc-cti-p01:3306/act2?zeroDateTimeBehavior=CONVERT_TO_NULL"/>
+      <property name="javax.persistence.jdbc.user" value="act2read"/>
+      <property name="javax.persistence.jdbc.driver" value="com.mysql.cj.jdbc.Driver"/>
+      <property name="javax.persistence.jdbc.password" value="act2pass"/>
+    </properties>
+  </persistence-unit>
+</persistence>
