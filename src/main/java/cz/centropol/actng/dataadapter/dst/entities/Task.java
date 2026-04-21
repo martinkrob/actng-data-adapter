@@ -127,6 +127,27 @@ public class Task implements Serializable, VersionedEntity {
         this.extCustID = extCustID;
     }
     
+    @Column(name = "customer_no", nullable = true)
+    private String customerNo = null;
+
+    /**
+     * Get the value of customerNo
+     *
+     * @return the value of customerNo
+     */
+    public String getCustomerNo() {
+        return customerNo;
+    }
+
+    /**
+     * Set the value of customerNo
+     *
+     * @param customerNo new value of customerNo
+     */
+    public void setCustomerNo(String customerNo) {
+        this.customerNo = customerNo;
+    }
+    
     @Temporal(TemporalType.TIMESTAMP)
     @Column(name = "creation_time", nullable = true)
     private Date creationTime = Calendar.getInstance().getTime();
