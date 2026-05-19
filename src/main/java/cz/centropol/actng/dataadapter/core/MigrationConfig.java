@@ -11,7 +11,7 @@ public class MigrationConfig {
     
     // Nový výčet podporovaných entit
     public enum EntityType {
-        TASK, INTERACTION
+        TASK, INTERACTION, MONITORFILE, QM
     }
 
     private final EntityType targetEntity;

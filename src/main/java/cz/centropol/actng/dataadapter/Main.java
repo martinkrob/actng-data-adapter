@@ -3,6 +3,8 @@ package cz.centropol.actng.dataadapter;
 import cz.centropol.actng.dataadapter.core.DatabaseManager;
 import cz.centropol.actng.dataadapter.core.MigrationConfig;
 import cz.centropol.actng.dataadapter.core.MigrationJob;
+import cz.centropol.actng.dataadapter.jobs.MonitorFileMigrationJob;
+import cz.centropol.actng.dataadapter.jobs.QMMigrationJob;
 import cz.centropol.actng.dataadapter.jobs.TaskMigrationJob;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
@@ -28,8 +30,14 @@ public class Main {
                 case TASK:
                     job = new TaskMigrationJob();
                     break;
+                case MONITORFILE:
+                    job = new MonitorFileMigrationJob();
+                    break;
+                case QM:
+                    job = new QMMigrationJob();
+                    break;
                 case INTERACTION:
-                    // job = new InteractionMigrationJob(); // Tady si to později odkomentuješ
+                    // job = new InteractionMigrationJob(); 
                     throw new UnsupportedOperationException("Migrace pro INTERACTION zatím není implementována.");
                 default:
                     throw new IllegalArgumentException("Neznámá entita: " + config.getTargetEntity());

@@ -8,6 +8,10 @@ import cz.centropol.actng.dataadapter.dst.entities.Attachment;
 import cz.centropol.actng.dataadapter.dst.entities.MonitorFile;
 import java.util.List;
 import javax.persistence.EntityManager;
+import org.json.simple.JSONArray;
+import org.json.simple.JSONObject;
+import org.json.simple.parser.JSONParser;
+import org.json.simple.parser.ParseException;
 
 public class MonitorFileMigrationJob implements MigrationJob {
 
@@ -71,10 +75,30 @@ public class MonitorFileMigrationJob implements MigrationJob {
                 for (cz.centropol.actng.dataadapter.src.entities.MonitorFile src : oldFiles) {
                     context.incrementTotal();
 
-                    // --- PODMÍNKA ARCHIVACE (dle zadání) ---
+                    // --- PODMÍNKA ARCHIVACE (Fallback na historická pole) ---
                     cz.centropol.actng.dataadapter.src.entities.Attachment srcAtt = src.getAudioRecord();
-                    if (srcAtt == null || !srcAtt.isArchived() || srcAtt.getArchivePath() == null || srcAtt.getArchivePath().isBlank()) {
-                        // Přeskakujeme záznam, který není řádně archivován
+                    
+                    boolean isArchived = false;
+                    String archivePath = null;
+                    int size = 0;
+                    String fileName = "unknown";
+
+                    if (srcAtt != null && srcAtt.isArchived() && srcAtt.getArchivePath() != null && !srcAtt.getArchivePath().isBlank()) {
+                        // 1. Způsob: Data jsou v novější entitě Attachment
+                        isArchived = true;
+                        archivePath = srcAtt.getArchivePath();
+                        size = srcAtt.getSize();
+                        fileName = srcAtt.getFileName();
+                    } else if (src.isArchived() && src.getArchivePath() != null && !src.getArchivePath().isBlank()) {
+                        // 2. Způsob: Data jsou ve starých historických (Deprecated) atributech přímo v MonitorFile
+                        isArchived = true;
+                        archivePath = src.getArchivePath();
+                        size = src.getSize();
+                        fileName = extractFileName(archivePath);
+                    }
+
+                    if (!isArchived) {
+                        // Přeskakujeme záznam, který není řádně archivován ani jedním ze způsobů
                         continue;
                     }
 
@@ -102,7 +126,7 @@ public class MonitorFileMigrationJob implements MigrationJob {
                     dst.setBillableSeconds(src.getBillableSeconds());
                     dst.setUniqueID(src.getUniqueId());
                     dst.setLinkedID(src.getLinkedId());
-                    dst.setAgentID(src.getAgentId());
+                    dst.setAgentID(mapAgentId(src.getAgentId()));
                     
                     // Telefonní atributy
                     dst.setQueue(src.getQueue());
@@ -115,20 +139,53 @@ public class MonitorFileMigrationJob implements MigrationJob {
                     dst.setLastApp(src.getLastApp());
                     dst.setLastData(src.getLastData());
                     
-                    // Poznámka a Voicebot data
-                    dst.setNote(src.getNote());
-                    dst.setTranscript(src.getVoicebotData()); // Mapování voicebotData na transcript (zatím)
+                    // Voicebot data
+                    dst.setCollectedData(src.getVoicebotData()); 
+                    
+                    // Extrakce transcriptu z voicebotData (JSON)
+                    if (src.getVoicebotData() != null) {
+                        try {
+                            JSONParser parser = new JSONParser();
+                            JSONObject body = (JSONObject) parser.parse(src.getVoicebotData());
+                            JSONArray flow = (JSONArray) body.get("speakFlow");
+
+                            if (flow != null) {
+                                StringBuilder sb = new StringBuilder();
+                                for (int i = 0; i < flow.size(); i++) {
+                                    JSONObject activity = (JSONObject) flow.get(i);
+                                    Object value = activity.get("type");
+                                    Integer type = (value instanceof Number) ? ((Number) value).intValue() : -1;
+
+                                    switch (type) {
+                                        case 3 -> {
+                                            // BOT
+                                            sb.append("VOICEBOT: ").append(String.valueOf(activity.get("activity")));
+                                            sb.append("\r\n");
+                                        }
+                                        case 5 -> {
+                                            // CLOVEK
+                                            sb.append("VOLAJÍCÍ: ").append(String.valueOf(activity.get("activity")).toUpperCase());
+                                            sb.append("\r\n");
+                                        }
+                                    }
+                                }
+                                dst.setTranscript(sb.toString());
+                            }
+                        } catch (ParseException ex) {
+                            dst.setTranscript("CHYBA PARSOVÁNÍ: " + ex.getMessage());
+                        }
+                    }
                     
                     // Logika isHuman: human = true pokud voicebotData == null
                     dst.setHuman(src.getVoicebotData() == null);
                     
-                    // Mapování Attachmentu (přílohy)
+                    // Mapování Attachmentu (přílohy) - nezávisle na zdroji
                     Attachment dstAtt = new Attachment();
-                    dstAtt.setFileName(srcAtt.getFileName());
-                    dstAtt.setContentId(srcAtt.getContentId());
-                    dstAtt.setSize(srcAtt.getSize());
-                    dstAtt.setArchived(true); // Musí být true dle podmínky
-                    dstAtt.setArchivePath(srcAtt.getArchivePath());
+                    dstAtt.setFileName(fileName);
+                    dstAtt.setContentId(0); // Dle zadání natvrdo 0
+                    dstAtt.setSize(size);
+                    dstAtt.setArchived(true); 
+                    dstAtt.setArchivePath(archivePath);
                     
                     dst.setRecord(dstAtt);
 
@@ -148,5 +205,31 @@ public class MonitorFileMigrationJob implements MigrationJob {
             offset += BATCH_SIZE;
             System.out.println("Zpracováno " + offset + " nahrávek...");
         }
+    }
+
+    private String extractFileName(String path) {
+        if (path == null) {
+            return "unknown.wav";
+        }
+        int maxSlash = Math.max(path.lastIndexOf('/'), path.lastIndexOf('\\'));
+        if (maxSlash >= 0 && maxSlash < path.length() - 1) {
+            return path.substring(maxSlash + 1);
+        }
+        return path;
+    }
+
+    private String mapAgentId(String oldAgentId) {
+        String result = null;
+        if (oldAgentId != null && !oldAgentId.isBlank()) {
+            int pos = oldAgentId.lastIndexOf(".");
+            if (pos == -1) {
+                result = oldAgentId;
+            } else {
+                if (pos > 0) {
+                    result = oldAgentId.substring(0, pos);
+                }
+            }
+        }
+        return result;
     }
 }

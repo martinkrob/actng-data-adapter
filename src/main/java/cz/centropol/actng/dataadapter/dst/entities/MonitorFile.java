@@ -9,12 +9,31 @@ import javax.persistence.JoinColumn;
 import javax.persistence.Lob;
 import javax.persistence.OneToOne;
 import javax.persistence.Table;
+import javax.persistence.FetchType;
+import javax.persistence.GeneratedValue;
+import javax.persistence.GenerationType;
+import javax.persistence.Id;
+import javax.persistence.JoinColumn;
+import javax.persistence.Lob;
+import javax.persistence.OneToOne;
+import javax.persistence.Table;
 import javax.persistence.Temporal;
 import javax.persistence.TemporalType;
+import javax.persistence.Version;
+import java.io.Serializable;
 
 @Entity
 @Table(name = "t_monitorfile")
-public class MonitorFile extends AbstractEntity {
+public class MonitorFile implements Serializable {
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.AUTO)
+    @Column(name = "id")
+    private Integer id;
+
+    @Version
+    @Column(name = "version")
+    private Integer version;
 
     @Column(name = "integration_id", nullable = true, unique = true)
     private Integer integrationId;
@@ -84,8 +103,6 @@ public class MonitorFile extends AbstractEntity {
     @Column(name = "collected_data", nullable = true)
     private String collectedData = null;
 
-    @Column(name = "note", length = 1024, nullable = true)
-    private String note;
 
     public Integer getIntegrationId() {
         return integrationId;
@@ -253,13 +270,5 @@ public class MonitorFile extends AbstractEntity {
 
     public void setCollectedData(String collectedData) {
         this.collectedData = collectedData;
-    }
-
-    public String getNote() {
-        return note;
-    }
-
-    public void setNote(String note) {
-        this.note = note;
     }
 }
